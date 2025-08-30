@@ -90,11 +90,9 @@ def get_latest_data():
     conn.close()
     return jsonify(dict(row)) if row else jsonify({}), 200
 
-# Serve static HTML
 @app.route("/")
-def index():
-    return send_from_directory(app.static_folder, "index.html")
-
+def dashboard():
+    return render_template("dashboard.html")
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
