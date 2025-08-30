@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>داشبورد سنسورها</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>🌱 داشبورد سیستم هوشمند گلخانه</h1>
+
+    <!-- Cards -->
+    <div class="cards">
+      <div class="card">
+        <h2>دما 🌡️</h2>
+        <div id="temp" class="big">--</div>
+      </div>
+      <div class="card">
+        <h2>رطوبت 💧</h2>
+        <div id="hum" class="big">--</div>
+      </div>
+      <div class="card">
+        <h2>رطوبت خاک 🌍</h2>
+        <div id="soil" class="big">--</div>
+      </div>
+      <div class="card">
+        <h2>پمپ 🚰</h2>
+        <div id="pump" class="big">--</div>
+      </div>
+      <div class="card">
+        <h2>فن 🌬️</h2>
+        <div id="fan" class="big">--</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+    </div>
+
+    <!-- Table -->
+    <h2>📊 تاریخچه داده‌ها</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>زمان</th>
+          <th>دما</th>
+          <th>رطوبت</th>
+          <th>خاک</th>
+          <th>پمپ</th>
+          <th>فن</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const API = "/data/all?key=shayan123";  // اینجا یادت باشه key همون API_KEY تو app.py هست
+
+    let chart;
+    function initChart() {
+      const ctx = document.getElementById("chart").getContext("2d");
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            { label: "دما", data: [], borderColor: "red", fill: false },
+            { label: "رطوبت", data: [], borderColor: "blue", fill: false }
+          ]
+        }
+      });
+    }
+
+    async function loadData() {
+      const res = await fetch(API);
+      const data = await res.json();
+
+      if (data.length === 0) return;
+
+      // آخرین داده
+      const latest = data[0];
+      document.getElementById("temp").textContent = latest.temperature + " °C";
+      document.getElementById("hum").textContent = latest.humidity + " %";
+      document.getElementById("soil").textContent = latest.soil + " %";
+      document.getElementById("pump").textContent = latest.pump_status ? "روشن" : "خاموش";
+      document.getElementById("fan").textContent = latest.fan_status ? "روشن" : "خاموش";
+
+      // جدول
+      const tbody = document.getElementById("table-body");
+      tbody.innerHTML = "";
+      data.slice(0, 10).forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.timestamp}</td>
+          <td>${row.temperature}</td>
+          <td>${row.humidity}</td>
+          <td>${row.soil}</td>
+          <td>${row.pump_status ? "روشن" : "خاموش"}</td>
+          <td>${row.fan_status ? "روشن" : "خاموش"}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // چارت
+      chart.data.labels = data.map(r => r.timestamp).reverse();
+      chart.data.datasets[0].data = data.map(r => r.temperature).reverse();
+      chart.data.datasets[1].data = data.map(r => r.humidity).reverse();
+      chart.update();
+    }
+
+    initChart();
+    loadData();
+    setInterval(loadData, 5000);
+  </script>
+</body>
+</html>
